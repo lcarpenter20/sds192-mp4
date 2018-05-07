@@ -1,0 +1,68 @@
+---
+title: "Mexcian Restaurants in Arizona"
+author: "Danica Miguel, Lizette Carpenter, and Emily Kim"
+date: "May 11, 2017"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r message = FALSE}
+library(mdsr)
+library(RMySQL)
+library(ggplot2)
+db <- dbConnect_scidb(dbname = "yelp")
+```
+
+```{r message=FALSE}
+class(db)
+```
+
+###How many reviews there were for a city in Arizona
+```{r message=FALSE}
+total_cities <- db %>% 
+  dbGetQuery("SELECT city, COUNT(review_count) as city_review_count
+FROM yelp.businesses
+GROUP BY city
+ORDER BY city_review_count DESC;")
+```
+
+###How many reviews there were for a mexican restaurant in a city in Arizona
+```{r message=FALSE}
+mexican_rest <- db %>% 
+  dbGetQuery("SELECT city, COUNT(review_count) as mexican_rest_count
+FROM yelp.reviews
+JOIN businesses ON reviews.business_id = businesses.id
+AND name LIKE '%Mexican%'
+GROUP BY city
+ORDER BY mexican_rest_count DESC;")
+```
+
+```{r}
+restaurants <- total_cities %>%
+  left_join(mexican_rest, by="city")
+
+zero_values <- function (value) {
+    value[is.na(value)] <- 0
+    return(value)
+}
+
+restaurants <- zero_values(restaurants)
+```
+
+```{r}
+biggest_city_count <- filter(restaurants, city== "Phoenix" | city =="Scottsdale" | city=="Tempe"| city == "Mesa" | city == "Chandler")
+
+ggplot(biggest_city_count, aes(x=city,y= (mexican_rest_count/city_review_count)*100)) +
+  geom_bar(stat = "identity")
+```
+
+```{r}
+total_reviews <- db %>%
+  dbGetQuery("SELECT city, REVIEW_COUNT as numReviews
+             FROM yelp.businesses
+            GROUP BY city;")
+```
+
+
+
