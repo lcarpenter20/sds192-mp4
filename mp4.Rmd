@@ -21,7 +21,7 @@ class(db)
 ###How many reviews there were for a city in Arizona
 ```{r message=FALSE}
 total_cities <- db %>% 
-  dbGetQuery("SELECT city, COUNT(review_count) as city_review_count
+  dbGetQuery("SELECT city, COUNT(review_count) as city_review_count, AVG(stars) as avg_stars
 FROM yelp.businesses
 GROUP BY city
 ORDER BY city_review_count DESC;")
@@ -36,6 +36,15 @@ JOIN businesses ON reviews.business_id = businesses.id
 AND name LIKE '%Mexican%'
 GROUP BY city
 ORDER BY mexican_rest_count DESC;")
+```
+
+```{r message=FALSE}
+italian_rest <- db %>%
+  dbGetQuery("SELECT city, COUNT(review_count) as italian_rest_count 
+FROM yelp.reviews JOIN yelp.businesses ON reviews.business_id = businesses.id
+AND name LIKE '%italian%'
+GROUP BY city 
+ORDER BY italian_rest_count DESC;")
 ```
 
 ```{r}
@@ -57,12 +66,7 @@ ggplot(biggest_city_count, aes(x=city,y= (mexican_rest_count/city_review_count)*
   geom_bar(stat = "identity")
 ```
 
-```{r}
-total_reviews <- db %>%
-  dbGetQuery("SELECT city, REVIEW_COUNT as numReviews
-             FROM yelp.businesses
-            GROUP BY city;")
-```
+
 
 
 
